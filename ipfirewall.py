@@ -27,12 +27,12 @@ class FirewallApp(QMainWindow):
     def get_connected_ips(self):
         system = platform.system()
         if system == "Linux":
-            output = subprocess.check_output(['arp', '-a']).decode('utf-8')
+            output = subprocess.check_output(['nmap', '-sn', '192.168.29.0/24']).decode('utf-8')
             lines = output.split('\n')
             ips = []
             for line in lines:
-                if line:
-                    ip = line.split('(')[1].split(')')[0]
+                if 'Nmap scan report' in line:
+                    ip = line.split()[-1]
                     ips.append(ip)
             return ips
         elif system == "Windows":
@@ -41,7 +41,7 @@ class FirewallApp(QMainWindow):
             ips = []
             for line in lines:
                 if line:
-                    ip = line.split("|", 1)
+                    ip = line.split()[1]
                     ips.append(ip)
             return ips
         else:
@@ -52,8 +52,10 @@ class FirewallApp(QMainWindow):
         system = platform.system()
         if system == "Linux":
             subprocess.run(['iptables', '-A', 'INPUT', '-s', ip_address, '-j', 'DROP'])
+            print("Blocked IP:", ip_address)
         elif system == "Windows":
             subprocess.run(['netsh', 'advfirewall', 'firewall', 'add', 'rule', 'name="BlockIP"', 'dir=in', 'action=block', 'remoteip=' + ip_address])
+            print("Blocked IP:", ip_address)
         else:
             print("Unsupported operating system.")
 
@@ -62,8 +64,10 @@ class FirewallApp(QMainWindow):
         system = platform.system()
         if system == "Linux":
             subprocess.run(['iptables', '-D', 'INPUT', '-s', ip_address, '-j', 'DROP'])
+            print("Unblocked:", ip_address)
         elif system == "Windows":
             subprocess.run(['netsh', 'advfirewall', 'firewall', 'delete', 'rule', 'name="BlockIP"', 'dir=in', 'action=block', 'remoteip=' + ip_address])
+            print("Unblocked:", ip_address)
         else:
             print("Unsupported operating system.")
 
